@@ -1,33 +1,19 @@
-const chat = document.getElementById('chat');
-const synth = window.speechSynthesis;
-
 async function sendMessage() {
-  const input = document.getElementById('userInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  addMessage('user', msg);
-  input.value = '';
+  const input = document.getElementById("userInput");
+  const chat = document.getElementById("chat");
 
-  const res = await fetch('/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: msg })
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  chat.innerHTML += `<p><b>USER:</b> ${userText}</p>`;
+  input.value = "";
+
+  const response = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: userText })
   });
-  const data = await res.json();
-  addMessage('nova', data.reply);
-  speak(data.reply);
-}
 
-function addMessage(sender, text) {
-  const div = document.createElement('div');
-  div.className = sender;
-  div.textContent = `${sender.toUpperCase()}: ${text}`;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function speak(text) {
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.voice = synth.getVoices().find(v => v.name.includes("Female")) || null;
-  synth.speak(utter);
+  const data = await response.json();
+  chat.innerHTML += `<p><b>NOVA:</b> ${data.reply}</p>`;
 }
