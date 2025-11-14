@@ -2,19 +2,19 @@ import express from "express";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
 
+app.use(cors());
 app.use(express.static("public"));
 app.use(bodyParser.json());
 
-app.post("/chat", async (req, res) => {
-  const userMsg = req.body.message;
-
-  if (!userMsg) return res.json({ reply: "No message received." });
-
+app.post("/api/chat", async (req, res) => {
   try {
+    const userMsg = req.body.message;
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -22,33 +22,21 @@ app.post("/chat", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",   // ✔ Better model & works today
+        model: "gpt-4.1-mini",
         messages: [
-          {
-            role: "system",
-            content: "You are NOVA — a confident, helpful futuristic assistant."
-          },
+          { role: "system", content: "You are NOVA AI assistant." },
           { role: "user", content: userMsg }
         ]
       })
     });
 
     const data = await response.json();
+    res.json({ reply: data?.choices?.[0]?.message?.content });
 
-    // Debug if there's a problem
-    console.log("OPENAI RESPONSE:", data);
-
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      "NOVA: Sorry, I couldn't process that.";
-
-    res.json({ reply });
-
-  } catch (err) {
-    console.error("SERVER ERROR:", err);
-    res.json({ reply: "Error: The AI server could not be reached." });
+  } catch (e) {
+    res.json({ reply: "Server error" });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`NOVA is online on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
