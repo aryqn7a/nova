@@ -1,17 +1,20 @@
 async function sendMessage() {
-  const input = document.getElementById("userInput");
-  const chat = document.getElementById("chat");
-  const msg = input.value;
+  let input = document.getElementById("userInput");
+  let chat = document.getElementById("chat");
 
-  chat.innerHTML += `<p><b>USER:</b> ${msg}</p>`;
+  let userMsg = input.value;
+  if (!userMsg) return;
 
-  const response = await fetch("/api/chat", {    // <— Safe endpoint
+  chat.innerHTML += `<p><b>You:</b> ${userMsg}</p>`;
+  input.value = "";
+
+  let response = await fetch("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: msg })
+    body: JSON.stringify({ message: userMsg })
   });
 
-  const data = await response.json();
+  let data = await response.json();
 
   chat.innerHTML += `<p><b>NOVA:</b> ${data.reply}</p>`;
 }
