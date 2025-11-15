@@ -1,42 +1,43 @@
 import express from "express";
-import dotenv from "dotenv";
-import fetch from "node-fetch";
 import cors from "cors";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
 dotenv.config();
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));  // <== SERVES index.html
+app.use(express.static("public"));
 
-app.post("/api/chat", async (req, res) => {
-  const userMsg = req.body.message;
+app.post("/chat", async (req, res) => {
+  const message = req.body.message;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "You are NOVA, an AI assistant." },
-          { role: "user", content: userMsg }
+          { role: "system", content: "You are NOVA, a futuristic AI assistant like Jarvis." },
+          { role: "user", content: message }
         ]
-      })
+      }),
     });
 
     const data = await response.json();
-    res.json({ reply: data.choices?.[0]?.message?.content || "Error." });
+    res.json({
+      reply: data.choices?.[0]?.message?.content || "Error processing request."
+    });
 
-  } catch (err) {
-    console.log(err);
-    res.json({ reply: "Server error" });
+  } catch (error) {
+    res.json({ reply: "Server error occurred." });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("NOVA is online on port " + PORT));
+app.listen(PORT, () => console.log("NOVA online on port " + PORT));
