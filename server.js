@@ -8,9 +8,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public"));  // <== SERVES index.html
 
 app.post("/api/chat", async (req, res) => {
+  const userMsg = req.body.message;
+
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -21,8 +23,8 @@ app.post("/api/chat", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are NOVA, an advanced AI assistant inspired by JARVIS." },
-          { role: "user", content: req.body.message }
+          { role: "system", content: "You are NOVA, an AI assistant." },
+          { role: "user", content: userMsg }
         ]
       })
     });
@@ -31,9 +33,10 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply: data.choices?.[0]?.message?.content || "Error." });
 
   } catch (err) {
+    console.log(err);
     res.json({ reply: "Server error" });
   }
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("NOVA online on port " + PORT));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("NOVA is online on port " + PORT));
