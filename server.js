@@ -1,55 +1,58 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
+app.use(express.json());
 
-// fix ES module __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// serve static frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-// route: chat
 app.post("/chat", async (req, res) => {
-  const message = req.body?.message || "";
+  const { message } = req.body;
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: "You are NOVA, a helpful AI assistant." },
-          { role: "user", content: message }
-        ]
+        model: "gpt-4.1-mini",
+        input: message
       })
     });
 
     const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content || "I couldn’t process that.";
+    console.log("API RESPONSE:", data);
+
+    if (data.error) {
+      return res.json({ reply: "NOVA: Cannot process that." });
+    }
+
+    const reply =
+      data.output_text ||
+      data.choices?.[0]?.text ||
+      "NOVA error.";
 
     res.json({ reply });
-  } catch (error) {
-    console.error("ERROR:", error);
-    res.json({ reply: "Server error" });
+
+  } catch (err) {
+    console.error("SERVER ERROR:", err);
+    res.json({ reply: "Server failed." });
   }
 });
 
-// catch-all route for browser GET /
-app.get("/", (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`NOVA is running on port ${PORT}`));
+app.listen(PORT, () => console.log("NOVA server running on " + PORT));
 
