@@ -30,29 +30,34 @@ app.post("/chat", async (req, res) => {
     });
 
     const data = await response.json();
-    console.log("API RESPONSE:", data);
+    console.log("🔵 RAW API RESPONSE:", data);
 
-    if (data.error) {
-      return res.json({ reply: "NOVA: Cannot process that." });
+    // Handle OpenAI errors
+    if (data?.error) {
+      console.log("🔴 OPENAI ERROR:", data.error);
+      return res.json({ reply: "NOVA: Could not process that message." });
     }
 
-    const reply =
-      data.output_text ||
-      data.choices?.[0]?.text ||
-      "NOVA error.";
+    // Extract output text from Responses API
+    let reply = data?.output_text;
+
+    // Fallbacks for rare OpenAI response structures
+    if (!reply) reply = data?.choices?.[0]?.text;
+    if (!reply) reply = data?.choices?.[0]?.message?.content;
+    if (!reply) reply = "NOVA: Unable to respond.";
 
     res.json({ reply });
 
   } catch (err) {
-    console.error("SERVER ERROR:", err);
-    res.json({ reply: "Server failed." });
+    console.log("🔥 SERVER ERROR:", err);
+    return res.json({ reply: "NOVA: Server error." });
   }
 });
 
+// Serve frontend
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("NOVA server running on " + PORT));
-
+app.listen(PORT, () => console.log("🚀 NOVA server running on port " + PORT));
